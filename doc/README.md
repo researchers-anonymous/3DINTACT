@@ -1,3 +1,3 @@
-![](https://github.com/edisonslightbulbs/INTACToolkit/blob/develop/doc/figures/pipeline.png)
+# Getting started
 
-## DOC
+[project overview](1.project-structure.md)
