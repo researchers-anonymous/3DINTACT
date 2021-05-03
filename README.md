@@ -64,4 +64,5 @@ cd build/bin
 # ./main --logtostderr=1
 ```
 
-Please read the [doc](/doc/README.md) for more information
+This project uses Microsoft's Azure Kinect to form a concrete example. The point cloud data source can, of course, be changed as [needed] (/doc/README.md).
+The project documentation is under development, as is the project itself. Should one opt to try to use or contribute to the toolkit's development, we kindly ask for your patience with the official documentation. It goes without say, any issues, recommendations, and feature requests are more than welcome.
