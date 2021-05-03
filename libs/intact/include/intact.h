@@ -48,12 +48,12 @@ public:
     std::shared_ptr<bool> sptr_isEpsilonComputed;
     std::shared_ptr<bool> sptr_isContextSegmented;
 
-    std::pair<Point, Point> m_segmentBound {};
+    std::pair<Point, Point> m_segmentBoundary {};
 
     void setSegmentBoundary(std::pair<Point, Point>& boundary)
     {
         std::lock_guard<std::mutex> lck(m_mutex);
-        m_segmentBound = boundary;
+        m_segmentBoundary = boundary;
     }
 
     /** initialize API */
@@ -64,7 +64,7 @@ public:
         Point lower(__FLT_MIN__, __FLT_MIN__, __FLT_MIN__);
         Point upper(__FLT_MAX__, __FLT_MAX__, __FLT_MAX__);
 
-        m_segmentBound = { lower, upper };
+        m_segmentBoundary = { lower, upper };
 
         sptr_run = std::make_shared<bool>(false);
         sptr_stop = std::make_shared<bool>(false);
@@ -96,47 +96,25 @@ public:
         sptr_objectPoints
             = std::make_shared<std::vector<Point>>(m_numPoints * 3);
     }
-
-    /**
-     * buildPcl
-     *   Builds point cloud in real-time.
-     *
-     * @param pcl
-     *   Point cloud data from kinect.
-     *
-     * @param transformedImage
-     *   RGB to DEPTH (transformed) image from kinect.
-     */
-    void buildPcl(k4a_image_t pcl, k4a_image_t transformedImage);
-
     /**
      * segment
      *   Segments context.
      *
-     * @param sptr_kinect
-     *   Kinect device.
-     *
      * @param sptr_intact
      *   Instance of API call.
      */
-    void segment(std::shared_ptr<Kinect>& sptr_kinect,
-        std::shared_ptr<Intact>& sptr_intact);
+    void segment(std::shared_ptr<Intact>& sptr_intact);
 
-    static void calibrate(std::shared_ptr<Kinect>& sptr_kinect,
-        std::shared_ptr<Intact>& sptr_intact);
+    static void calibrate(std::shared_ptr<Intact>& sptr_intact);
 
     /**
      * render
      *   Renders point cloud.
      *
-     * @param sptr_kinect
-     *   Kinect device.
-     *
      * @param sptr_intact
      *   Instance of API call.
      */
-    static void render(std::shared_ptr<Kinect>& sptr_kinect,
-        std::shared_ptr<Intact>& sptr_intact);
+    static void render(std::shared_ptr<Intact>& sptr_intact);
     /**
      * cluster
      *   Clusters segmented context.
@@ -182,9 +160,6 @@ public:
     void setRegionColor(const std::vector<uint8_t>& color);
 
     void setSegmentPoints(const std::vector<Point>& points);
-
-    void setSegment(
-        std::pair<std::vector<float>, std::vector<uint8_t>>& segment);
 
     /** Thread-safe getters */
 
@@ -243,5 +218,15 @@ public:
     std::shared_ptr<std::vector<float>> getObject();
 
     std::shared_ptr<std::vector<uint8_t>> getObjectColor();
+
+    std::pair<Point, Point> getSegmentBoundary();
+
+    void setRaw(const std::vector<float>& pcl);
+
+    void setRawColor(const std::vector<uint8_t>& color);
+
+    void setSegment(const std::vector<float>& segment);
+
+    void setSegmentColor(const std::vector<uint8_t>& segment);
 };
 #endif /* INTACT_H */

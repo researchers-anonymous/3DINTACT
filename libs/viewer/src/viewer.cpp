@@ -22,8 +22,7 @@ void view()
     }
 }
 
-void viewer::draw(
-    std::shared_ptr<Intact>& sptr_intact, std::shared_ptr<Kinect>& sptr_kinect)
+void viewer::draw(std::shared_ptr<Intact>& sptr_intact)
 {
     /** create window and bind its context to the main thread */
     pangolin::CreateWindowAndBind("VIGITIA", 2560, 1080);
