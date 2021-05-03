@@ -1,4 +1,4 @@
-![]()
+![](https://github.com/researchers-anonymous/3DINTACT/blob/main/doc/figures/concept.png)
 
 ## 3DINTACT: Toolkit for segmenting interaction regions on tabletop surfaces
 
