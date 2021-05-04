@@ -1,8 +1,8 @@
-![](https://github.com/researchers-anonymous/3DINTACT/blob/API/doc/figures/concept.png)
+![](https://github.com/researchers-anonymous/3DINTACT/blob/main/doc/figures/concept.png)
 
 ### 3DINTACT: Toolkit for segmenting interaction regions on tabletop surfaces
 
-![](https://github.com/researchers-anonymous/3DINTACT/blob/API/doc/figures/regions.png)
+![](https://github.com/researchers-anonymous/3DINTACT/blob/main/doc/figures/regions.png)
 
 #### Overview:
 
