@@ -15,7 +15,7 @@ cd "$PROJECT_DIR" || return
 
 mkdir -p ./output
 rm -rf ./output/*.*
-./build/bin/INTACToolkit --logtostderr=1
+./build/bin/3DINTACToolkit --logtostderr=1
 # cloudcompare.CloudCompare ./output/rgb2depth.ply >/dev/null 2>&1 &
 # cloudcompare.CloudCompare ./output/depth2rgb.ply >/dev/null 2>&1 &
 # cloudcompare.CloudCompare ./output/context.ply >/dev/null 2>&1 &

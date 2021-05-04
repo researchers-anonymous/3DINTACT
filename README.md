@@ -1,8 +1,10 @@
-![](https://github.com/researchers-anonymous/3DINTACT/blob/main/doc/figures/concept.png)
+![](https://github.com/researchers-anonymous/3DINTACT/blob/API/doc/figures/concept.png)
 
-## 3DINTACT: Toolkit for segmenting interaction regions on tabletop surfaces
+### 3DINTACT: Toolkit for segmenting interaction regions on tabletop surfaces
 
-### Overview:
+![](https://github.com/researchers-anonymous/3DINTACT/blob/API/doc/figures/regions.png)
+
+#### Overview:
 
 |   Platform |   Hardware	|  Dependencies 	|
 |---	|---	|---	|
@@ -23,9 +25,11 @@ If already cloned without the `--recurse-submodules` flag,  use `git submodule u
 
 ### [2/3] Installing the dependencies
 
-***
+Make sure to install all the dependencies listed in the table.
 
-Make sure to install all the dependencies listed in the table. As a caveat, Microsoft's Azure Kinect has a ceremonious list dependencies. Be sure to install them all. 3 steps to help get started are given below:
+###### Caveat (for developers using the AzureKinect)
+
+Microsoft's Azure Kinect has a ceremonious list dependencies. Be sure to install all those as well. Here are a few steps to give you a headstart.
 
 ###### 1. The depth engine
 
@@ -58,12 +62,17 @@ make
 cd build/bin
 
 # run target
-./3DINTACT
+./3DINTACToolkit
 
 # to stdout logs [ optional ]
-# ./3DINTACT --logtostderr=1
+# ./3DINTACToolkit --logtostderr=1
 ```
+
 * * *
 
 This project uses Microsoft's Azure Kinect to form a concrete example. The point cloud data source can, of course, be changed as [needed](/doc/README.md).
-The project documentation is under development, as is the project itself. Should one opt to try to use or contribute to the toolkit's development, we kindly ask for your patience with the official documentation. It goes without say, any issues, recommendations, and feature requests are more than welcome.
+The project documentation is under development, as is the project itself. We ask for your patience with official documentation. It goes without say, any issues, recommendations, and feature requests are welcome.
+
+* * *
+
+### * illustration [YouTube](https://youtu.be/mVYcAixiS-Q)

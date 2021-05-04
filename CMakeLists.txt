@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.11)
-project(INTACToolkit)
+project(3DINTACToolkit)
 
 # optimization for dev environments
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -91,14 +91,14 @@ file(GLOB_RECURSE LIBS_SRC
         )
 
 # set-up target
-add_executable(INTACToolkit
+add_executable(3DINTACToolkit
     ${EXT_SRC}
     ${LIBS_SRC}
     ${SRC_DIR}/main.cpp
     )
 
 # set-up target include directories
-target_include_directories(INTACToolkit PRIVATE
+target_include_directories(3DINTACToolkit PRIVATE
     ${K4A_VERSION}
         ${K4A_INCLUDE}
     ${INCLUDE_DIRS}
@@ -106,7 +106,7 @@ target_include_directories(INTACToolkit PRIVATE
     )
 
 # link libraries
-target_link_libraries(INTACToolkit
+target_link_libraries(3DINTACToolkit
     glog
     gflags
     Eigen3::Eigen
@@ -117,7 +117,7 @@ target_link_libraries(INTACToolkit
 
 # link libraries
 if(EXECUTE_TARGET)
-    add_custom_command(TARGET INTACToolkit
+    add_custom_command(TARGET 3DINTACToolkit
         POST_BUILD
         COMMAND ./scripts/execute_3dintact.sh
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
