@@ -10,13 +10,13 @@
 PROJECT_DIR=$(dirname $(dirname $(readlink -f "$0")))
 echo "-- initializing the Kinect SDK Project"
 
-# -- build directory
+# -- Azure kinect sdk build directory
 K4A_SDK="$PROJECT_DIR/external/Azure-Kinect-Sensor-SDK/build"
 
-cd "$K4A_SDK" || return
-command git pull --recurse-submodules -j 12
-command git submodule update --init --recursive -j 12
-
-
-cd "$PROJECT_DIR" || return
-./scripts/build_kinect_sdk.sh -j 12
+if [ ! -d "$K4A_SDK" ]
+then
+    command git pull --recurse-submodules -j 12
+    command git submodule update --init --recursive -j 12
+    cd "$PROJECT_DIR" || return
+    ./scripts/build_kinect_sdk.sh -j 12
+fi

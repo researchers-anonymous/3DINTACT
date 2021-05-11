@@ -26,7 +26,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 option(EXECUTE_TARGET "Execute Project Target" ON)                 # default OFF
 option(BUILD_SHARED_LIBS "Build Shared Library" ON)                # default ON
 option(OPTIMIZE_PROJECT "Tidy up and optimize source code" OFF)    # default OFF
-option(INITIALIZE_K4A_SDK "Initialize the kinect SDK project" OFF) # default ON
+option(INITIALIZE_K4A_SDK "Initialize the kinect SDK project" ON)  # default ON
 
 if(OPTIMIZE_PROJECT)
     if(UNIX AND NOT APPLE)
@@ -115,7 +115,7 @@ target_link_libraries(3DINTACToolkit
     ${K4A_LIBRARY}/bin/libk4a.so
     )
 
-# link libraries
+# execute target
 if(EXECUTE_TARGET)
     add_custom_command(TARGET 3DINTACToolkit
         POST_BUILD

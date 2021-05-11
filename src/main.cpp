@@ -164,11 +164,11 @@ int main(int argc, char* argv[])
     std::shared_ptr<Intact> sptr_intact(new Intact(sptr_kinect->m_numPoints));
     sptr_intact->raiseRunFlag();
 
-    /** start sensing */
+    /** sense */
     std::thread senseWorker(
         sense, std::ref(sptr_kinect), std::ref(sptr_intact));
 
-    /** sense */
+    /** calibrate */
     std::thread calibrateWorker(calibrate, std::ref(sptr_intact));
 
     /** segment */
@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
     /** cluster */
     std::thread clusterWorker(cluster, std::ref(sptr_intact));
 
-    /** wait for segmenting to compete ~15ms */
+    /** wait for segmentation ~15ms */
     while (!sptr_intact->isSegmented()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(3));
     }

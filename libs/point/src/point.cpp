@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <cmath>
+
 #include "point.h"
 
 extern const int NOISE = -2;

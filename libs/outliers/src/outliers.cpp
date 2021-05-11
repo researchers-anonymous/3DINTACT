@@ -1,6 +1,8 @@
+#include <cmath>
+#include <vector>
+
 #include "outliers.h"
 #include "point.h"
-#include <vector>
 
 const float IQR = 1.5; // <- Inter quartile range (in theory 1.5)
 

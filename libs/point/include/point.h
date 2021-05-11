@@ -2,9 +2,7 @@
 #define POINT_H
 
 #include <array>
-#include <cmath>
 #include <iostream>
-#include <utility>
 #include <vector>
 
 extern const int R;    // <- dimensional space
