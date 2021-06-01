@@ -41,6 +41,7 @@ private:
 
     std::mutex m_flagMutex;
     std::mutex m_pCloudClusterMutex;
+    std::mutex m_colClusterMutex;
 
     std::shared_ptr<std::vector<Point>> sptr_pCloud = nullptr;
     std::shared_ptr<std::vector<Point>> sptr_pCloudSeg = nullptr;
@@ -62,7 +63,9 @@ private:
     typedef std::pair<std::vector<Point>,
         std::vector<std::vector<unsigned long>>>
         t_clusters;
+
     std::shared_ptr<t_clusters> sptr_pCloudClusters = nullptr;
+    std::shared_ptr<std::pair<int16_t*, uint8_t*>> sptr_colClusters = nullptr;
 
     std::shared_ptr<bool> sptr_run;
     std::shared_ptr<bool> sptr_stop;
@@ -185,5 +188,9 @@ public:
 
     void setPCloudClusters(const t_clusters& clusters);
     __attribute__((unused)) std::shared_ptr<t_clusters> getPCloudClusters();
+
+    void setColClusters(const std::pair<int16_t*, uint8_t*>& colClusters);
+
+    std::shared_ptr<std::pair<int16_t*, uint8_t*>> getColClusters();
 };
 #endif /* I3D_H */

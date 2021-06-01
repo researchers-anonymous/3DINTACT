@@ -7,6 +7,34 @@
 #include "macros.hpp"
 #include "point.h"
 
+// colors handy for coloring clusters:
+// see@ https://colorbrewer2.org/#type=diverging&scheme=RdYlBu&n=9
+//
+__attribute__((unused)) uint8_t red[3] = { 215, 48, 39 };
+__attribute__((unused)) uint8_t orange[3] = { 244, 109, 67 };
+__attribute__((unused)) uint8_t gold[3] = { 253, 173, 97 };
+__attribute__((unused)) uint8_t brown[3] = { 254, 224, 144 };
+__attribute__((unused)) uint8_t yellow[3] = { 255, 255, 191 };
+__attribute__((unused)) uint8_t skyblue[3] = { 224, 243, 248 };
+__attribute__((unused)) uint8_t oceanblue[3] = { 171, 217, 233 };
+__attribute__((unused)) uint8_t blue[3] = { 116, 173, 209 };
+__attribute__((unused)) uint8_t deepblue[3] = { 69, 117, 180 };
+
+// colors handy for coloring clusters:
+// https://colorbrewer2.org/#type=diverging&scheme=BrBG&n=9 */
+//
+__attribute__((unused)) uint8_t deepbrown[3] = { 140, 81, 10 };
+__attribute__((unused)) uint8_t darkbrown[3] = { 191, 129, 45 };
+__attribute__((unused)) uint8_t goldenbrown[3] = { 223, 194, 125 };
+__attribute__((unused)) uint8_t khaki[3] = { 223, 232, 195 };
+__attribute__((unused)) uint8_t lightgrey[3] = { 245, 245, 245 };
+__attribute__((unused)) uint8_t lightgreen[3] = { 199, 234, 229 };
+__attribute__((unused)) uint8_t green[3] = { 128, 205, 193 };
+__attribute__((unused)) uint8_t chromagreen[3] = { 120, 198, 121 };
+__attribute__((unused)) uint8_t deepgreen[3] = { 53, 151, 143 };
+__attribute__((unused)) uint8_t othergreen[3] = { 1, 102, 94 };
+__attribute__((unused)) uint8_t black[3] = { 0, 0, 0 };
+
 void utils::configTorch(
     std::vector<std::string>& classNames, torch::jit::script::Module& module)
 {
@@ -150,12 +178,12 @@ bool utils::inSegment(const int& index, const std::vector<int16_t>& pCloudFrame,
     return true;
 }
 
-void utils::stitch(const int& index, Point& point, int16_t* ptr_pcl,
+void utils::stitch(const int& index, Point& point, int16_t* ptr_pCloud,
     uint8_t* ptr_img_GL, uint8_t* ptr_img_CV)
 {
-    ptr_pcl[3 * index + 0] = point.m_xyz[0]; // x
-    ptr_pcl[3 * index + 1] = point.m_xyz[1]; // y
-    ptr_pcl[3 * index + 2] = point.m_xyz[2]; // z
+    ptr_pCloud[3 * index + 0] = point.m_xyz[0]; // x
+    ptr_pCloud[3 * index + 1] = point.m_xyz[1]; // y
+    ptr_pCloud[3 * index + 2] = point.m_xyz[2]; // z
 
     ptr_img_CV[4 * index + 0] = point.m_bgra[0]; // blue
     ptr_img_CV[4 * index + 1] = point.m_bgra[1]; // green
@@ -212,4 +240,27 @@ void utils::cvDisplay(
     if (cv::waitKey(1) == 27) {
         STOP
     }
+}
+
+void utils::add(std::vector<uint8_t*>& colors)
+{
+    colors.emplace_back(red);
+    colors.emplace_back(orange);
+    colors.emplace_back(gold);
+    colors.emplace_back(brown);
+    colors.emplace_back(yellow);
+    colors.emplace_back(skyblue);
+    colors.emplace_back(oceanblue);
+    colors.emplace_back(blue);
+    colors.emplace_back(deepblue);
+    colors.emplace_back(deepbrown);
+    colors.emplace_back(goldenbrown);
+    colors.emplace_back(khaki);
+    colors.emplace_back(lightgreen);
+    colors.emplace_back(lightgrey);
+    colors.emplace_back(green);
+    colors.emplace_back(chromagreen);
+    colors.emplace_back(deepgreen);
+    colors.emplace_back(othergreen);
+    colors.emplace_back(black);
 }

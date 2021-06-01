@@ -1,37 +1,63 @@
-
 #include <cmath>
 #include <iostream>
 #include <nanoflann.hpp>
 
 #include "knn.h"
-#include "utils.h"
 
-/** change to 1 to print knn solution to terminal */
-#define PRINT_KNN 0
+template <typename T> struct PointCloud {
+    struct Point {
+        T x, y, z;
+    };
 
-#if PRINT_KNN == 1
-#define KNN_RESULTS                                                            \
-    std::cout << "num of points -> " << points.size() << std::endl;            \
-    std::cout << "  query point -> (" << queryPoint[0] << ", "                 \
-              << queryPoint[1] << ", " << queryPoint[2] << ")" << std::endl;   \
-    std::cout << "searching for -> " << k << " nearest neighbours"             \
-              << std::endl;                                                    \
-    for (size_t i = 0; i < resultSet.size(); ++i) {                            \
-        std::cout << "#" << i << ",\t"                                         \
-                  << "index: " << ret_index[i] << ",\t"                        \
-                  << "dist: " << out_dist_sqr[i] << ",\t"                      \
-                  << "point: (" << cloud.pts[ret_index[i]].x << ", "           \
-                  << cloud.pts[ret_index[i]].y << ", "                         \
-                  << cloud.pts[ret_index[i]].z << ")" << std::endl;            \
-    }                                                                          \
-    std::cout << std::endl
-#else
-#define SHOW_RESULTS
+    std::vector<Point> pts;
+    [[nodiscard]] inline size_t kdtree_get_point_count() const
+    {
+        return pts.size();
+    }
+    [[nodiscard]] inline T kdtree_get_pt(
+        const size_t idx, const size_t dim) const
+    {
+        if (dim == 0)
+            return pts[idx].x;
+        else if (dim == 1)
+            return pts[idx].y;
+        else
+            return pts[idx].z;
+    }
+
+    template <class BBOX> bool kdtree_get_bbox(BBOX& /* bb */) const
+    {
+        return false;
+    }
+};
+
+void print(const std::vector<Point>& points, const PointCloud<float>& cloud,
+    const float* point, const int& k,
+    const nanoflann::KNNResultSet<float>& resultSet, const size_t* kIndex,
+    const float* distsSquared)
+{
+#define SHOW_KNN_RESULTS 0
+#if SHOW_KNN_RESULTS == 1
+    std::cout << "search space = " << points.size() << " points \t"
+              << " searching for the " << k << " nearest neighbors "
+              << std::endl;
+    for (size_t i = 0; i < resultSet.size(); ++i) {
+        std::cout << "query point >> (" << point[0] << ", " << point[1] << ", "
+                  << point[2] << ") \t"
+                  << "nearest neighbour #" << i << ",\t"
+                  << "point >> (" << cloud.pts[kIndex[i]].x << ", "
+                  << cloud.pts[kIndex[i]].y << ", " << cloud.pts[kIndex[i]].z
+                  << ")"
+                  << "\t"
+                  << "index: " << kIndex[i] << ",\t"
+                  << "dist: " << distsSquared[i] << " (squared L2 distance)"
+                  << std::endl;
+    }
 #endif
+}
 
 template <typename T>
-void castToNanoflannPoint(
-    PointCloud<T>& point, const std::vector<Point>& points)
+void toNanoflannPoint(PointCloud<T>& point, const std::vector<Point>& points)
 {
     const size_t N = points.size();
     point.pts.resize(N);
@@ -42,66 +68,96 @@ void castToNanoflannPoint(
     }
 }
 
-template <typename num_t>
-std::vector<std::pair<Point, float>> nanoflannKnn(
-    const std::vector<Point>& points, const size_t& indexOfQueryPoint,
-    const size_t& k)
+/** alias kd-tree index */
+typedef nanoflann::KDTreeSingleIndexDynamicAdaptor<
+    nanoflann::L2_Simple_Adaptor<float, PointCloud<float>>, PointCloud<float>,
+    3>
+    kdTree;
+
+std::vector<int> nanoflannKnn(
+    const std::vector<Point>& points, const Point& queryPoint, const int& k)
 {
     const size_t N = points.size();
-    PointCloud<num_t> cloud;
+    PointCloud<float> cloud;
 
-    /** construct a kd-tree index: */
-    typedef nanoflann::KDTreeSingleIndexDynamicAdaptor<
-        nanoflann::L2_Simple_Adaptor<num_t, PointCloud<num_t>>,
-        PointCloud<num_t>, 3 /* dim */
-        >
-        my_kd_tree_t;
+    /** build kd-tree */
+    kdTree index(3, cloud, nanoflann::KDTreeSingleIndexAdaptorParams(10));
 
-    my_kd_tree_t index(3 /*dim*/, cloud,
-        nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
+    toNanoflannPoint(cloud, points);
 
-    /** adapt points to nanoflann::PointCloud<T> */
-    castToNanoflannPoint(cloud, points);
+    int chunk_size = 100;
 
-    /** parse query point */
-    num_t queryPoint[3] = { points[indexOfQueryPoint].m_xyz[0],
-        points[indexOfQueryPoint].m_xyz[1],
-        points[indexOfQueryPoint].m_xyz[2] };
-
-    /** knn search */
-    size_t chunk_size = 100;
     for (size_t i = 0; i < N; i = i + chunk_size) {
         size_t end = std::min(size_t(i + chunk_size), N - 1);
-
-        /** Inserts all points from [i, end] */
         index.addPoints(i, end);
     }
+
     size_t removePointIndex = N - 1;
     index.removePoint(removePointIndex);
-    size_t ret_index[k];
-    num_t out_dist_sqr[k];
-    nanoflann::KNNResultSet<num_t> resultSet(k);
-    resultSet.init(ret_index, out_dist_sqr);
-    index.findNeighbors(resultSet, queryPoint, nanoflann::SearchParams(10));
+    size_t kIndex[k];
+    float distsSquared[k];
+    nanoflann::KNNResultSet<float> resultSet(k);
+    resultSet.init(kIndex, distsSquared);
 
-    /** [ optional ]
-     *  to print results to terminal set SHOW 1 */
-    SHOW_RESULTS;
+    float point[3] = { (float)queryPoint.m_xyz[0], (float)queryPoint.m_xyz[1],
+        (float)queryPoint.m_xyz[2] };
 
-    /** collect results and return solution */
-    std::vector<std::pair<Point, float>> nnHeap;
-    for (size_t i = 0; i < resultSet.size(); ++i) {
-        auto x = (float)cloud.pts[ret_index[i]].x;
-        auto y = (float)cloud.pts[ret_index[i]].y;
-        auto z = (float)cloud.pts[ret_index[i]].z;
-        Point point(x, y, z);
-        nnHeap.push_back({ point, out_dist_sqr[i] });
-    }
-    return nnHeap;
+    /**  search tree for point */
+    index.findNeighbors(resultSet, point, nanoflann::SearchParams(10));
+
+    print(points, cloud, point, k, resultSet, kIndex, distsSquared);
+
+    std::vector<int> heap(kIndex, kIndex + sizeof kIndex / sizeof kIndex[0]);
+    return heap;
 }
 
-std::vector<std::pair<Point, float>> knn::compute(
-    std::vector<Point>& points, const int& k, const int& indexOfQueryPoint)
+std::vector<float> nanoflannKnn(const std::vector<Point>& points,
+    const std::vector<Point>& queryPoints, const int& k)
 {
-    return nanoflannKnn<float>(points, indexOfQueryPoint, k);
+    const size_t N = points.size();
+    PointCloud<float> cloud;
+
+    /** build kd-tree */
+    kdTree index(3, cloud, nanoflann::KDTreeSingleIndexAdaptorParams(10));
+
+    toNanoflannPoint(cloud, points);
+
+    int chunk_size = 100;
+
+    for (size_t i = 0; i < N; i = i + chunk_size) {
+        size_t end = std::min(size_t(i + chunk_size), N - 1);
+        index.addPoints(i, end);
+    }
+
+    size_t removePointIndex = N - 1;
+    index.removePoint(removePointIndex);
+    size_t kIndex[k];
+    float distsSquared[k];
+    nanoflann::KNNResultSet<float> resultSet(k);
+    resultSet.init(kIndex, distsSquared);
+
+    /**  for heaping distances to the Kth nearest neighbour */
+    std::vector<float> heap;
+    for (const auto& queryPoint : queryPoints) {
+        float point[3] = { (float)queryPoint.m_xyz[0],
+            (float)queryPoint.m_xyz[1], (float)queryPoint.m_xyz[2] };
+
+        /**  search tree for point */
+        index.findNeighbors(resultSet, point, nanoflann::SearchParams(10));
+
+        print(points, cloud, point, k, resultSet, kIndex, distsSquared);
+    }
+    return heap;
+}
+
+std::vector<int> knn::compute(
+    std::vector<Point>& points, const Point& queryPoint, const int& k)
+{
+    return nanoflannKnn(points, queryPoint, k);
+}
+
+std::vector<float> knn::compute(std::vector<Point>& points,
+    const std::vector<Point>& queryPoints, const int& k)
+{
+    return nanoflannKnn(points, queryPoints, k);
 }

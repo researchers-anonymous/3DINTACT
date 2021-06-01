@@ -15,4 +15,4 @@ cd "$PROJECT_DIR" || return
 mkdir -p ./output
 rm -rf ./output/cluster
 ./build/bin/cluster --logtostderr=1
-cloudcompare.CloudCompare ./output/context.ply >/dev/null 2>&1 &
+# cloudcompare.CloudCompare ./output/context.ply >/dev/null 2>&1 &

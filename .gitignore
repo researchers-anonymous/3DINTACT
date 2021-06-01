@@ -5,3 +5,4 @@ cmake-build-debug/
 *.write
 *.csv
 *.ply
+update.sh

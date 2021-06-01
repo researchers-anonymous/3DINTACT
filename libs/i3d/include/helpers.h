@@ -46,7 +46,7 @@ void addPixel_CV(const int& index, std::vector<uint8_t>& imgFrame_CV);
 bool inSegment(const int& index, const std::vector<int16_t>& pCloudFrame,
     const Point& minPoint, const Point& maxPoint);
 
-void stitch(const int& index, Point& point, int16_t* ptr_pcl,
+void stitch(const int& index, Point& point, int16_t* ptr_pCloud,
     uint8_t* ptr_img_GL, uint8_t* ptr_img_CV);
 
 std::pair<Point, Point> queryBoundary(std::vector<Point>& points);
@@ -55,6 +55,6 @@ void stitch(const int& index, Point& point, uint8_t* ptr_img_CV);
 
 void cvDisplay(cv::Mat img, std::shared_ptr<I3d>& sptr_i3d, clock_t start);
 
-    void add(std::vector<uint8_t *> &colors);
+void add(std::vector<uint8_t*>& colors);
 }
 #endif /*INTACT_UTILS_H*/

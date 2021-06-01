@@ -4,26 +4,24 @@
 
 #include "tinyply.h"
 
-#include <chrono>
-#include <mutex>
-#include <shared_mutex>
-#include <thread>
-
-#include "intact.h"
+#include "i3d.h"
 #include "viewer.h"
 
 int mode = 0;
-
 void view()
 {
     mode++;
-    if (mode == 4) {
+    if (mode == 2) {
         mode = 0;
     }
 }
 
-void viewer::draw(std::shared_ptr<Intact>& sptr_intact)
+void viewer::render(std::shared_ptr<I3d>& sptr_i3d)
 {
+    // get dimensions
+    int w = sptr_i3d->getDepthWidth();
+    int h = sptr_i3d->getDepthHeight();
+
     /** create window and bind its context to the main thread */
     pangolin::CreateWindowAndBind("VIGITIA", 2560, 1080);
 
@@ -34,10 +32,10 @@ void viewer::draw(std::shared_ptr<Intact>& sptr_intact)
     glEnable(GL_DEPTH_TEST);
 
     /** create vertex and colour buffer objects and register them with CUDA */
-    pangolin::GlBuffer vA(pangolin::GlArrayBuffer, sptr_intact->getNumPoints(),
-        GL_FLOAT, 3, GL_STATIC_DRAW);
-    pangolin::GlBuffer cA(pangolin::GlArrayBuffer, sptr_intact->getNumPoints(),
-        GL_UNSIGNED_BYTE, 3, GL_STATIC_DRAW);
+    pangolin::GlBuffer vA(
+        pangolin::GlArrayBuffer, w * h, GL_SHORT, 3, GL_STATIC_DRAW);
+    pangolin::GlBuffer cA(
+        pangolin::GlArrayBuffer, w * h, GL_UNSIGNED_BYTE, 4, GL_STATIC_DRAW);
 
     /** define camera render object for scene browsing */
     pangolin::OpenGlRenderState camera(
@@ -55,31 +53,27 @@ void viewer::draw(std::shared_ptr<Intact>& sptr_intact)
     // register key press to trigger different view perspective
     pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 'c', view);
 
-    /** render point cloud */
-    while (!sptr_intact->isStop()) {
+    /** pool resources, and render */
+    int16_t* pCloudFrame;
+    uint8_t* imgFrame;
+
+    while (!sptr_i3d->isStop()) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if (mode == 0) {
-            vA.Upload((void*)sptr_intact->getRaw()->data(),
-                sptr_intact->getNumPoints() * 3 * sizeof(float));
-            cA.Upload((void*)sptr_intact->getRawColor()->data(),
-                sptr_intact->getNumPoints() * 3 * sizeof(uint8_t));
+            pCloudFrame = sptr_i3d->getPCloudFrame()->data();
+            imgFrame = sptr_i3d->getImgFrame_GL()->data();
         } else if (mode == 1) {
-            vA.Upload((void*)sptr_intact->getSegment()->data(),
-                sptr_intact->getNumPoints() * 3 * sizeof(float));
-            cA.Upload((void*)sptr_intact->getSegmentColor()->data(),
-                sptr_intact->getNumPoints() * 3 * sizeof(uint8_t));
+            pCloudFrame = sptr_i3d->getPCloudSegFrame()->data();
+            imgFrame = sptr_i3d->getImgSegFrame_GL()->data();
         } else if (mode == 2) {
-            vA.Upload((void*)sptr_intact->getRegion()->data(),
-                sptr_intact->getNumPoints() * 3 * sizeof(float));
-            cA.Upload((void*)sptr_intact->getRegionColor()->data(),
-                sptr_intact->getNumPoints() * 3 * sizeof(uint8_t));
-        } else if (mode == 3) {
-            vA.Upload((void*)sptr_intact->getObject()->data(),
-                sptr_intact->getNumPoints() * 3 * sizeof(float));
-            cA.Upload((void*)sptr_intact->getObjectColor()->data(),
-                sptr_intact->getNumPoints() * 3 * sizeof(uint8_t));
+            auto clusters = sptr_i3d->getColClusters();
+            pCloudFrame = clusters->first;
+            imgFrame = clusters->second;
         }
+
+        vA.Upload((void*)pCloudFrame, w * h * 3 * sizeof(int16_t));
+        cA.Upload((void*)imgFrame, w * h * 4 * sizeof(uint8_t));
 
         viewPort.Activate(camera);
         glClearColor(0.0, 0.0, 0.3, 1.0);
@@ -89,8 +83,7 @@ void viewer::draw(std::shared_ptr<Intact>& sptr_intact)
 
         /** gracious exit from rendering app */
         if (pangolin::ShouldQuit()) {
-            sptr_intact->raiseStopFlag();
+            sptr_i3d->raiseStopFlag();
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }

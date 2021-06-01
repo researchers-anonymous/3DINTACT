@@ -3,13 +3,7 @@
 
 #include "point.h"
 
-extern const int NOISE = -2;
 extern const int UNLABELED = -1;
-
-extern const int R = 3;
-extern const int xCol = 0;
-extern const int yCol = 1;
-extern const int zCol = 2;
 
 bool compare(const Point& point, const Point& other)
 {
@@ -22,37 +16,53 @@ void Point::sort(std::vector<Point>& points)
 }
 
 Point::Point()
-    : m_xyz({ 0.0, 0.0, 0.0 })
+    : m_xyz({ (int16_t)0.0, (int16_t)0.0, (int16_t)0.0 })
     , m_cluster(UNLABELED)
     , m_distance(nullptr, __DBL_MAX__)
 {
-    m_clusterColor = " 0 0 0";
-    m_rgb = { 0, 0, 0 };
+    m_crgb = " 0 0 0";
+    // m_rgb = { 0, 0, 0 };
 }
 
-Point::Point(float x, float y, float z)
+Point::Point(int16_t x, int16_t y, int16_t z)
     : m_xyz({ x, y, z })
 
     , m_cluster(UNLABELED)
     , m_distance(nullptr, __DBL_MAX__)
 {
-    m_clusterColor = " 0 0 0";
-    m_rgb = { 0, 0, 0 };
+    m_crgb = " 0 0 0";
+    // m_rgb = { 0, 0, 0 };
 }
 
-void Point::setColor(const std::vector<float>& rgb)
+void Point::setPoint(const int16_t xyz[3])
 {
-    for (int i = 0; i < rgb.size(); i++) {
-        m_rgb[i] = rgb[i];
-    }
+    m_xyz[0] = xyz[0];
+    m_xyz[1] = xyz[1];
+    m_xyz[2] = xyz[2];
 }
 
-float Point::distance(const Point& other) const
+void Point::setPixel_GL(const uint8_t rgba[4])
 {
-    float x = m_xyz[0] - other.m_xyz[0];
-    float y = m_xyz[1] - other.m_xyz[1];
-    float z = m_xyz[2] - other.m_xyz[2];
-    return (float)std::sqrt((x * x) + (y * y) + (z * z));
+    m_rgba[0] = rgba[0];
+    m_rgba[1] = rgba[1];
+    m_rgba[2] = rgba[2];
+    m_rgba[3] = rgba[3];
+}
+
+void Point::setPixel_CV(const uint8_t bgra[4])
+{
+    m_bgra[0] = bgra[0];
+    m_bgra[1] = bgra[1];
+    m_bgra[2] = bgra[2];
+    m_bgra[3] = bgra[3];
+}
+
+int16_t Point::distance(const Point& other) const
+{
+    int16_t x = m_xyz[0] - other.m_xyz[0];
+    int16_t y = m_xyz[1] - other.m_xyz[1];
+    int16_t z = m_xyz[2] - other.m_xyz[2];
+    return (int16_t)std::sqrt((x * x) + (y * y) + (z * z));
 }
 
 // TODO: quick test
@@ -62,17 +72,12 @@ Point Point::centroid(std::vector<Point>& points)
     float ySum = 0;
     float zSum = 0;
     for (const auto& point : points) {
-        xSum = xSum + point.m_xyz[0];
-        ySum = ySum + point.m_xyz[1];
-        zSum = zSum + point.m_xyz[2];
+        xSum = xSum + (float)point.m_xyz[0];
+        ySum = ySum + (float)point.m_xyz[1];
+        zSum = zSum + (float)point.m_xyz[2];
     }
-    return Point { xSum / points.size(), ySum / points.size(),
-        zSum / points.size() };
-}
-
-bool Point::unlabeled() const
-{
-    return (m_cluster == UNLABELED || m_cluster == NOISE);
+    return Point { (int16_t)(xSum / points.size()),
+        (int16_t)(ySum / points.size()), (int16_t)(zSum / points.size()) };
 }
 
 bool Point::operator==(const Point& rhs) const
