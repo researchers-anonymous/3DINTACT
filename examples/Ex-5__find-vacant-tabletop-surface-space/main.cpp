@@ -10,7 +10,7 @@
 void clusterRegion(std::shared_ptr<I3d>& sptr_i3d)
 {
     int minPoints = 4;
-    const float epsilon = 3.170;
+    const float epsilon = 3.180;
     sptr_i3d->clusterRegion(epsilon, minPoints, sptr_i3d);
 }
 
@@ -34,9 +34,12 @@ void k4aCapture(
 {
     START
     sptr_kinect->capture();
+    sptr_kinect->imgCapture();
     sptr_kinect->depthCapture();
-    int w = k4a_image_get_width_pixels(sptr_kinect->m_depth);
-    int h = k4a_image_get_height_pixels(sptr_kinect->m_depth);
+    int imgWidth = k4a_image_get_width_pixels(sptr_kinect->m_img);
+    int imgHeight = k4a_image_get_height_pixels(sptr_kinect->m_img);
+    int depthWidth = k4a_image_get_width_pixels(sptr_kinect->m_depth);
+    int depthHeight = k4a_image_get_height_pixels(sptr_kinect->m_depth);
 
     while (sptr_i3d->isRun()) {
         START_TIMER
@@ -47,8 +50,8 @@ void k4aCapture(
         sptr_kinect->c2dCapture();
         sptr_kinect->transform(RGB_TO_DEPTH);
 
+        auto* ptr_k4aC2dData = k4a_image_get_buffer(sptr_kinect->m_c2d);
         auto* ptr_k4aImgData = k4a_image_get_buffer(sptr_kinect->m_img);
-        auto* ptr_k4aC2DImgData = k4a_image_get_buffer(sptr_kinect->m_c2d);
         auto* ptr_k4aPCloudData
             = (int16_t*)(void*)k4a_image_get_buffer(sptr_kinect->m_pcl);
         auto* ptr_k4aDepthData
@@ -57,10 +60,12 @@ void k4aCapture(
             = (k4a_float2_t*)(void*)k4a_image_get_buffer(sptr_kinect->m_xyT);
 
         // share k4a resources with intact
-        sptr_i3d->setDepthWidth(w);
-        sptr_i3d->setDepthHeight(h);
+        sptr_i3d->setImgWidth(imgWidth);
+        sptr_i3d->setImgHeight(imgHeight);
+        sptr_i3d->setDepthWidth(depthWidth);
+        sptr_i3d->setDepthHeight(depthHeight);
         sptr_i3d->setSensorImgData(ptr_k4aImgData);
-        sptr_i3d->setSensorC2DImgData(ptr_k4aC2DImgData);
+        sptr_i3d->setSensorC2DImgData(ptr_k4aC2dData);
         sptr_i3d->setSensorTableData(ptr_k4aTableData);
         sptr_i3d->setSensorDepthData(ptr_k4aDepthData);
         sptr_i3d->setSensorPCloudData(ptr_k4aPCloudData);
@@ -105,7 +110,47 @@ int main(int argc, char* argv[])
     std::thread clusterRegionWorker(clusterRegion, std::ref(sptr_i3d));
 
     // ------> do stuff with tabletop environment <------
+    SLEEP_UNTIL_POINTCLOUD_READY
+    std::vector<Point> pCloud = *sptr_i3d->getPCloud2x2Bin();
 
+    SLEEP_UNTIL_PROPOSAL_READY
+    std::vector<Point> pCloudSeg = *sptr_i3d->getPCloudSeg2x2Bin();
+
+    SLEEP_UNTIL_CLUSTERS_READY
+    auto clusters = sptr_i3d->getPCloudClusters();
+    auto points = clusters->first;
+    auto indexClusters = clusters->second;
+    // points represents our segmented point cloud
+    // indexes variable represents clustered indexes of the
+    // points
+
+    // initialize chromakey color
+    uint8_t rgba[4] = { 27, 120, 55, 1 };
+
+    // clusters are sorted in descending order of size
+    // in this example to extract the tabletop surface
+    // we assume that the vacant space corresponds to
+    // the largest cluster
+    std::vector<Point> vacant;
+        for(auto& index: indexClusters[0]){
+            points[index].setPixel_RGBA(rgba);
+            vacant.emplace_back(points[index]);
+    }
+
+    // helper script uses cloud compare for viewing
+    // output point clouds. To take advantage of the
+    // convenience script, install cloud compare.
+    // Alternatively use any other *.ply point cloud
+    // viewer. File written to: ./output/context.ply
+    ply::write(vacant);
+
+    // snapshot of tabletop environment
+    // File written to: ./output/scene.png
+    uint8_t* imgData = *sptr_i3d->getSensorImgData();
+    int w = sptr_i3d->getImgWidth();
+    int h = sptr_i3d->getImgHeight();
+    io::write(imgData, w, h);
+    STOP
     // ------> do stuff with tabletop environment <------
 
     k4aCaptureWorker.join();

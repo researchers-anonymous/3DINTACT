@@ -12,10 +12,14 @@
 class I3d {
 
 public:
+    int m_imgWidth {};
+    int m_imgHeight {};
+
     int m_depthWidth {};
     int m_depthHeight {};
 
 private:
+    std::mutex m_imgDimensions;
     std::mutex m_depthDimensions;
 
     std::mutex m_sensorTableDataMutex;
@@ -25,6 +29,7 @@ private:
 
     std::mutex m_pCloudMutex;
     std::mutex m_pCloudSegMutex;
+    std::mutex m_optimizedPCloudSegMutex;
 
     std::mutex m_pCloudFrameMutex;
     std::mutex m_pCloudSegFrameMutex;
@@ -47,9 +52,11 @@ private:
     std::shared_ptr<std::vector<Point>> sptr_pCloudSeg = nullptr;
     std::shared_ptr<std::vector<Point>> sptr_pCloud2x2Bin = nullptr;
     std::shared_ptr<std::vector<Point>> sptr_pCloudSeg2x2Bin = nullptr;
+    std::shared_ptr<std::vector<Point>> sptr_optimizedPCloudSeg = nullptr;
 
     k4a_float2_t* ptr_sensorTableData = nullptr;
     std::shared_ptr<uint8_t*> sptr_sensorImgData = nullptr;
+    std::shared_ptr<uint8_t*> sptr_sensorC2DImgData = nullptr;
     std::shared_ptr<int16_t*> sptr_sensorPCloudData = nullptr;
     std::shared_ptr<uint16_t*> sptr_sensorDepthData = nullptr;
 
@@ -138,6 +145,11 @@ public:
     void raiseProposalReadyFlag();
     void raisePCloudReadyFlag();
 
+    int getImgWidth();
+    int getImgHeight();
+    void setImgWidth(const int& width);
+    void setImgHeight(const int& height);
+
     int getDepthWidth();
     int getDepthHeight();
     void setDepthWidth(const int& width);
@@ -148,6 +160,9 @@ public:
 
     void setSensorTableData(k4a_float2_t* ptr_table);
     k4a_float2_t* getSensorTableData();
+
+    void setSensorC2DImgData(uint8_t* ptr_imgData);
+    std::shared_ptr<uint8_t*> getSensorC2DImgData();
 
     void setSensorImgData(uint8_t* ptr_imgData);
     std::shared_ptr<uint8_t*> getSensorImgData();
@@ -182,12 +197,15 @@ public:
     void setPCloudSeg(const std::vector<Point>& points);
     std::shared_ptr<std::vector<Point>> getPCloudSeg();
 
+    void setOptimizedPCloudSeg(const std::vector<Point>& points);
+    std::shared_ptr<std::vector<Point>> getOptimizedPCloudSeg();
+
     void setPCloudSeg2x2Bin(const std::vector<Point>& points);
     __attribute__((unused)) std::shared_ptr<std::vector<Point>>
     getPCloudSeg2x2Bin();
 
     void setPCloudClusters(const t_clusters& clusters);
-    __attribute__((unused)) std::shared_ptr<t_clusters> getPCloudClusters();
+    std::shared_ptr<t_clusters> getPCloudClusters();
 
     void setColClusters(const std::pair<int16_t*, uint8_t*>& colClusters);
 

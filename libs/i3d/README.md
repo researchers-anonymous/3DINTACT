@@ -53,7 +53,7 @@ private:
     std::shared_ptr<std::vector<Point>> sptr_pCloudSeg2x2Bin = nullptr;
 
     k4a_float2_t* ptr_sensorTableData = nullptr;
-    std::shared_ptr<uint8_t*> sptr_sensorImgData = nullptr;
+    std::shared_ptr<uint8_t*> sptr_sensorC2DImgData = nullptr;
     std::shared_ptr<int16_t*> sptr_sensorPCloudData = nullptr;
     std::shared_ptr<uint16_t*> sptr_sensorDepthData = nullptr;
 
@@ -151,8 +151,8 @@ public:
     void setSensorTableData(k4a_float2_t* ptr_table);
     k4a_float2_t* getSensorTableData();
 
-    void setSensorImgData(uint8_t* ptr_imgData);
-    std::shared_ptr<uint8_t*> getSensorImgData();
+    void setSensorC2DImgData(uint8_t* ptr_imgData);
+    std::shared_ptr<uint8_t*> getSensorC2DImgData();
 
     void setSensorDepthData(uint16_t* ptr_depth);
     std::shared_ptr<uint16_t*> getSensorDepthData();
@@ -257,7 +257,7 @@ void k4aCapture(
         // share k4a resources with intact
         sptr_i3d->setDepthWidth(w);
         sptr_i3d->setDepthHeight(h);
-        sptr_i3d->setSensorImgData(ptr_k4aImgData);
+        sptr_i3d->setSensorC2DImgData(ptr_k4aImgData);
         sptr_i3d->setSensorTableData(ptr_k4aTableData);
         sptr_i3d->setSensorDepthData(ptr_k4aDepthData);
         sptr_i3d->setSensorPCloudData(ptr_k4aPCloudData);

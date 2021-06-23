@@ -64,14 +64,14 @@ public:
     [[nodiscard]] int16_t distance(const Point& other) const;
 
     /** operator overrides */
-    bool operator<(const Point& rhs) const;
-    bool operator!=(const Point& rhs) const;
-    bool operator==(const Point& rhs) const;
+    bool operator<(const Point& other) const;
+    bool operator!=(const Point& other) const;
+    bool operator==(const Point& other) const;
     friend std::ostream& operator<<(std::ostream& t_stream, const Point& point);
     friend std::istream& operator>>(std::istream& t_stream, Point& point);
 
     void setPoint(const int16_t xyz[3]);
-    void setPixel_GL(const uint8_t rgba[4]);
-    void setPixel_CV(const uint8_t bgra[4]);
+    void setPixel_RGBA(const uint8_t* rgba);
+    void setPixel_BGRA(const uint8_t* bgra);
 };
 #endif /* POINT_H */

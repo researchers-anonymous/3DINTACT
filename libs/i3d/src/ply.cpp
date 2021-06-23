@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <nanoflann.hpp>
 #include <set>
 #include <sstream>
 #include <vector>
@@ -7,6 +8,7 @@
 #include "io.h"
 #include "ply.h"
 #include "point.h"
+#include "searcher.h"
 
 #define PLY_HEADER                                                             \
     std::ofstream ofs(FILE);                                                   \
@@ -73,49 +75,115 @@ void ply::write(const k4a_image_t& pclImage, const k4a_image_t& rgbImage,
     ofs_text.write(ss.str().c_str(), (std::streamsize)ss.str().length());
 }
 
-std::vector<Point> colorize(
-    std::vector<Point>& pcl, std::vector<Point>& context)
+/////////////////////////////////////////////////////////////
+//                   colorize segment
+/////////////////////////////////////////////////////////////
+
+template <typename T> struct PointCloud {
+    struct Point {
+        T x, y, z;
+    };
+
+    std::vector<Point> pts;
+    [[nodiscard]] inline size_t kdtree_get_point_count() const
+    {
+        return pts.size();
+    }
+    [[nodiscard]] inline T kdtree_get_pt(
+        const size_t idx, const size_t dim) const
+    {
+        if (dim == 0)
+            return pts[idx].x;
+        else if (dim == 1)
+            return pts[idx].y;
+        else
+            return pts[idx].z;
+    }
+
+    template <class BBOX> bool kdtree_get_bbox(BBOX& /* bb */) const
+    {
+        return false;
+    }
+};
+
+template <typename T>
+void toNanoflannPoint(PointCloud<T>& point, const std::vector<Point>& points)
 {
-    Point centroid = Point::centroid(context);
-
-    for (auto& point : pcl) {
-        point.m_distance.second = point.distance(centroid);
+    const size_t N = points.size();
+    point.pts.resize(N);
+    for (size_t i = 0; i < N; i++) {
+        point.pts[i].x = points[i].m_xyz[0];
+        point.pts[i].y = points[i].m_xyz[1];
+        point.pts[i].z = points[i].m_xyz[2];
     }
-    for (auto& point : context) {
-        point.m_distance.second = point.distance(centroid);
-    }
-
-    const int CONTEXT_CLUSTER = 100; // <- random value
-
-    std::set<Point> colorizedContext;
-    for (auto& point : context) {
-        point.m_cluster = CONTEXT_CLUSTER;
-        colorizedContext.insert(point);
-    }
-    for (auto& point : pcl) {
-        colorizedContext.insert(point);
-    }
-    std::vector<Point> colorized;
-    colorized.assign(colorizedContext.begin(), colorizedContext.end());
-    return colorized;
 }
 
-void ply::write(std::vector<Point>& raw, std::vector<Point>& context)
+typedef nanoflann::KDTreeSingleIndexDynamicAdaptor<
+    nanoflann::L2_Simple_Adaptor<float, PointCloud<float>>, PointCloud<float>,
+    3>
+    kdTree;
+
+std::vector<Point> colourPCloudSeg(
+    std::vector<Point>& pCloud, std::vector<Point>& pCloudSeg)
 {
-    std::vector<Point> points = colorize(raw, context);
+
+    const int k = 1;
+    const size_t N = pCloudSeg.size();
+    PointCloud<float> cloud;
+
+    /** build kd-tree */
+    kdTree index(3, cloud, nanoflann::KDTreeSingleIndexAdaptorParams(10));
+    toNanoflannPoint(cloud, pCloudSeg);
+    int chunk_size = 100;
+    for (size_t i = 0; i < N; i = i + chunk_size) {
+        size_t end = std::min(size_t(i + chunk_size), N - 1);
+        index.addPoints(i, end);
+    }
+
+    for (auto& queryPoint : pCloud) {
+        size_t removePointIndex = N - 1;
+        index.removePoint(removePointIndex);
+        size_t kIndex[k];
+        float distsSquared[k];
+        nanoflann::KNNResultSet<float> resultSet(k);
+        resultSet.init(kIndex, distsSquared);
+
+        float point[3] = { (float)queryPoint.m_xyz[0],
+            (float)queryPoint.m_xyz[1], (float)queryPoint.m_xyz[2] };
+
+        /**  search tree for point */
+        index.findNeighbors(resultSet, point, nanoflann::SearchParams(10));
+
+        for (size_t i = 0; i < resultSet.size(); ++i) {
+            auto x = (int16_t)cloud.pts[kIndex[i]].x;
+            auto y = (int16_t)cloud.pts[kIndex[i]].y;
+            auto z = (int16_t)cloud.pts[kIndex[i]].z;
+            Point nN(x, y, z);
+            if (queryPoint == nN) {
+                queryPoint.m_crgb = " 174 1 126";
+            }
+        }
+    }
+    return pCloud;
+}
+
+/////////////////////////////////////////////////////////////
+//                   colorize segment
+/////////////////////////////////////////////////////////////
+
+void ply::write(std::vector<Point>& pCloud, std::vector<Point>& pCloudSeg)
+{
+    std::vector<Point> points = colourPCloudSeg(pCloud, pCloudSeg);
     const std::string FILE = io::pwd() + "/output/context.ply";
 
     /** write to file */
     PLY_HEADER;
     std::stringstream ss;
     for (const auto& point : points) {
-        if (point.m_cluster == 100) {
-            ss << point.m_xyz[0] << " " << point.m_xyz[1] << " "
-               << point.m_xyz[2] << " 174 1 126" << std::endl;
-            continue;
-        }
-        ss << point.m_xyz[0] << " " << point.m_xyz[1] << " " << point.m_xyz[2];
-        ss << " 0 0 0" << std::endl;
+        std::string x = std::to_string(point.m_xyz[0]);
+        std::string y = std::to_string(point.m_xyz[1]);
+        std::string z = std::to_string(point.m_xyz[2]);
+        ss << x << " " << y << " " << z << point.m_crgb << std::endl;
     }
     std::ofstream ofs_text(FILE, std::ios::out | std::ios::app);
     ofs_text.write(ss.str().c_str(), (std::streamsize)ss.str().length());

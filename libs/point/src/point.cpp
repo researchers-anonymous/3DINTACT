@@ -41,7 +41,7 @@ void Point::setPoint(const int16_t xyz[3])
     m_xyz[2] = xyz[2];
 }
 
-void Point::setPixel_GL(const uint8_t rgba[4])
+void Point::setPixel_RGBA(const uint8_t* rgba)
 {
     m_rgba[0] = rgba[0];
     m_rgba[1] = rgba[1];
@@ -49,7 +49,7 @@ void Point::setPixel_GL(const uint8_t rgba[4])
     m_rgba[3] = rgba[3];
 }
 
-void Point::setPixel_CV(const uint8_t bgra[4])
+void Point::setPixel_BGRA(const uint8_t* bgra)
 {
     m_bgra[0] = bgra[0];
     m_bgra[1] = bgra[1];
@@ -80,21 +80,21 @@ Point Point::centroid(std::vector<Point>& points)
         (int16_t)(ySum / points.size()), (int16_t)(zSum / points.size()) };
 }
 
-bool Point::operator==(const Point& rhs) const
+bool Point::operator==(const Point& other) const
 {
-    return (m_xyz[0] == rhs.m_xyz[0] && m_xyz[1] == rhs.m_xyz[1]
-        && m_xyz[2] == rhs.m_xyz[2]);
+    return (m_xyz[0] == other.m_xyz[0] && m_xyz[1] == other.m_xyz[1]
+        && m_xyz[2] == other.m_xyz[2]);
 }
 
-bool Point::operator!=(const Point& rhs) const
+bool Point::operator!=(const Point& other) const
 {
-    return (m_xyz[0] != rhs.m_xyz[0] || m_xyz[1] != rhs.m_xyz[1]
-        || m_xyz[2] != rhs.m_xyz[2]);
+    return (m_xyz[0] != other.m_xyz[0] || m_xyz[1] != other.m_xyz[1]
+        || m_xyz[2] != other.m_xyz[2]);
 }
 
-bool Point::operator<(const Point& rhs) const
+bool Point::operator<(const Point& other) const
 {
-    return (this->m_distance.second < rhs.m_distance.second);
+    return (this->m_distance.second < other.m_distance.second);
 }
 
 std::ostream& operator<<(std::ostream& stream, const Point& point)

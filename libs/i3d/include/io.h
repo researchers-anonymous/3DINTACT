@@ -31,19 +31,16 @@ public:
      * @param k4a_image_t
      *   RGB image from kinect.
      */
-    static void write(const k4a_image_t& t_rgb);
+    static void write(const uint8_t* imgData, const int& w, const int& h);
 
     /**
      * io::write
      *   Writes any given list of values for graphing.
      *
-     * @param y
+     * @param value
      *   A vector list of (float) y values.
-     *
-     * @param file
-     *   Absolute path to file with point cloud.
      */
-    static void write(std::vector<float>& y, const std::string& file);
+    static void write(std::vector<float>& value);
 
     /**
      * io::head

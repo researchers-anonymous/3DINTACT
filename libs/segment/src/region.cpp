@@ -1,3 +1,4 @@
+#include <ply.h>
 #include <vector>
 
 #include "outliers.h"
@@ -7,8 +8,12 @@
 
 std::vector<Point> region::segment(std::vector<Point>& points)
 {
+    //  arguably unnecessary, still done
+    //  to keep a 'non mutated' point cloud.
+    std::vector<Point> raw = points;
+
     // remove outliers
-    std::vector<Point> denoised = outliers::filter(points);
+    std::vector<Point> denoised = outliers::filter(raw);
 
     // compute svd
     int flag = Eigen::ComputeThinU | Eigen::ComputeThinV;
@@ -18,7 +23,7 @@ std::vector<Point> region::segment(std::vector<Point>& points)
     std::vector<Point> coarse = proposal::grow(usv, denoised);
 
     // final segment
-    std::vector<Point> final = outliers::filter(coarse);
+    // std::vector<Point> final = outliers::filter(coarse);
 
-    return final;
+    return coarse;
 }

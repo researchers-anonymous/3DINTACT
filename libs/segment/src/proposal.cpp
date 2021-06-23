@@ -4,8 +4,8 @@
 #include "io.h"
 #include "proposal.h"
 
-#define V3_ARGMIN 350
-#define U_ARGMIN 3
+#define V3_ARGMIN 450
+#define U_ARGMIN 4
 const int C0 = 0; // column 0
 const int C1 = 1; // column 1
 const int C2 = 2; // column 2

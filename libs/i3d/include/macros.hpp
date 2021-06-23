@@ -29,9 +29,9 @@
         sptr_i3d->raisePCloudReadyFlag();                                      \
     }
 
-#define SLEEP_UNTIL_PROPOSAL_READY_FLAG                                        \
+#define SLEEP_UNTIL_PROPOSAL_READY                                             \
     while (!sptr_i3d->isProposalReady()) {                                     \
-        std::this_thread::sleep_for(std::chrono::milliseconds(3));             \
+        std::this_thread::sleep_for(std::chrono::microseconds(1));             \
     }
 
 #define RAISE_PROPOSAL_READY_FLAG                                              \
@@ -70,11 +70,13 @@
         sptr_i3d->stop();                                                      \
     }
 
-#define STOP sptr_i3d->raiseStopFlag();
-
 #define START bool init = true;
-
-#define PRINT(pCloud) ply::write(pCloud);
+#define RUN sptr_i3d->isRun()
+#define STOP                                                                   \
+    sptr_i3d->stop();                                                          \
+    sptr_i3d->raiseStopFlag();                                                 \
+    std::this_thread::sleep_for(std::chrono::seconds(3));                      \
+    exit(0);
 
 #define BENCHMARK 0
 #if BENCHMARK == 1
@@ -90,7 +92,5 @@
 #define PROPOSE_REGION 1
 #define SEGMENT_REGION 1
 #define CLUSTER_REGION 1
-
-// todo: introduce macro configuration logic
 
 #endif /*INTACT_MACROS_HPP*/

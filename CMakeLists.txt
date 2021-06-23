@@ -104,7 +104,7 @@ file(GLOB_RECURSE LIBS_SRC
     ${LIB_DIR}/*.cpp
     )
 
-option(BUILD_3DINTACT "Build Project" OFF)            # default OFF
+option(BUILD_3DINTACT "Build Project" OFF) # default OFF
 if(BUILD_3DINTACT)
     # setup target
     add_executable(3DINTACToolkit
@@ -133,7 +133,7 @@ if(BUILD_3DINTACT)
         )
 
     # execute target
-    option(EXECUTE_TARGET "Execute Project Target" OFF)            # default OFF
+    option(EXECUTE_TARGET "Execute Project Target" OFF) # default OFF
     if(EXECUTE_TARGET)
         add_custom_command(TARGET 3DINTACToolkit
             POST_BUILD
@@ -141,4 +141,3 @@ if(BUILD_3DINTACT)
             WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
     endif()
 endif()
-

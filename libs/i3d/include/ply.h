@@ -20,7 +20,7 @@ void write(const Point& lowerBound, const Point& upperBound,
     const k4a_image_t& pclImage, const k4a_image_t& rgbImage,
     const std::string& file);
 
-void write(std::vector<Point>& raw, std::vector<Point>& context);
+void write(std::vector<Point>& pCloud, std::vector<Point>& pCloudSeg);
 
 void write(std::vector<Point>& points);
 

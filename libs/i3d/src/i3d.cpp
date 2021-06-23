@@ -6,13 +6,13 @@
 #include <utility>
 
 #include "dbscan.h"
-#include "helpers.h"
 #include "i3d.h"
 #include "kinect.h"
 #include "macros.hpp"
 #include "outliers.h"
 #include "region.h"
 #include "svd.h"
+#include "utilities.h"
 
 I3d::I3d()
 {
@@ -120,6 +120,30 @@ void I3d::stop()
     *sptr_run = false;
 }
 
+void I3d::setImgHeight(const int& height)
+{
+    std::lock_guard<std::mutex> lck(m_imgDimensions);
+    m_imgHeight = height;
+}
+
+void I3d::setImgWidth(const int& width)
+{
+    std::lock_guard<std::mutex> lck(m_imgDimensions);
+    m_imgWidth = width;
+}
+
+int I3d::getImgWidth()
+{
+    std::lock_guard<std::mutex> lck(m_imgDimensions);
+    return m_imgWidth;
+}
+
+int I3d::getImgHeight()
+{
+    std::lock_guard<std::mutex> lck(m_imgDimensions);
+    return m_imgHeight;
+}
+////////////////////////////////
 void I3d::setDepthHeight(const int& height)
 {
     std::lock_guard<std::mutex> lck(m_depthDimensions);
@@ -180,6 +204,19 @@ std::shared_ptr<uint8_t*> I3d::getSensorImgData()
     std::lock_guard<std::mutex> lck(m_sensorImgDataMutex);
     return sptr_sensorImgData;
 }
+
+void I3d::setSensorC2DImgData(uint8_t* ptr_imgData)
+{
+    std::lock_guard<std::mutex> lck(m_sensorImgDataMutex);
+    sptr_sensorC2DImgData = std::make_shared<uint8_t*>(ptr_imgData);
+}
+
+std::shared_ptr<uint8_t*> I3d::getSensorC2DImgData()
+{
+    std::lock_guard<std::mutex> lck(m_sensorImgDataMutex);
+    return sptr_sensorC2DImgData;
+}
+
 void I3d::setSensorPCloudData(int16_t* ptr_pclData)
 {
     std::lock_guard<std::mutex> lck(m_sensorPCloudDataMutex);
@@ -238,6 +275,18 @@ std::shared_ptr<std::vector<Point>> I3d::getPCloudSeg()
 {
     std::lock_guard<std::mutex> lck(m_pCloudSegMutex);
     return sptr_pCloudSeg;
+}
+
+void I3d::setOptimizedPCloudSeg(const std::vector<Point>& points)
+{
+    std::lock_guard<std::mutex> lck(m_optimizedPCloudSegMutex);
+    sptr_optimizedPCloudSeg = std::make_shared<std::vector<Point>>(points);
+}
+
+std::shared_ptr<std::vector<Point>> I3d::getOptimizedPCloudSeg()
+{
+    std::lock_guard<std::mutex> lck(m_optimizedPCloudSegMutex);
+    return sptr_optimizedPCloudSeg;
 }
 
 void I3d::setImgFrame_GL(const std::vector<uint8_t>& frame)
@@ -318,8 +367,7 @@ void I3d::setPCloudClusters(const t_clusters& clusters)
     sptr_pCloudClusters = std::make_shared<t_clusters>(clusters);
 }
 
-__attribute__((unused)) std::shared_ptr<I3d::t_clusters>
-I3d::getPCloudClusters()
+std::shared_ptr<I3d::t_clusters> I3d::getPCloudClusters()
 {
     std::lock_guard<std::mutex> lck(m_pCloudClusterMutex);
     return sptr_pCloudClusters;
@@ -351,7 +399,6 @@ void I3d::buildPCloud(std::shared_ptr<I3d>& sptr_i3d)
 
     std::vector<Point> pCloud(w * h);
     while (sptr_i3d->isRun()) {
-
         START_TIMER
         ptr_depthData = *sptr_i3d->getSensorDepthData();
         ptr_tableData = sptr_i3d->getSensorTableData();
@@ -399,7 +446,7 @@ void I3d::proposeRegion(std::shared_ptr<I3d>& sptr_i3d)
 void I3d::segmentRegion(std::shared_ptr<I3d>& sptr_i3d)
 {
 #if SEGMENT_REGION == 1
-    SLEEP_UNTIL_PROPOSAL_READY_FLAG
+    SLEEP_UNTIL_PROPOSAL_READY
     START
     int w = sptr_i3d->getDepthWidth();
     int h = sptr_i3d->getDepthHeight();
@@ -421,7 +468,7 @@ void I3d::segmentRegion(std::shared_ptr<I3d>& sptr_i3d)
     while (sptr_i3d->isRun()) {
         START_TIMER
         ptr_sensorPCloudData = *sptr_i3d->getSensorPCloudData();
-        ptr_sensorImgData = *sptr_i3d->getSensorImgData();
+        ptr_sensorImgData = *sptr_i3d->getSensorC2DImgData();
 
         int index = 0;
         for (int i = 0; i < w * h; i++) {
@@ -430,12 +477,12 @@ void I3d::segmentRegion(std::shared_ptr<I3d>& sptr_i3d)
             // create unsegmented assets
             if (utils::invalid(i, ptr_sensorPCloudData, ptr_sensorImgData)) {
                 utils::addXYZ(i, pCloudFrame);
-                utils::addPixel_GL(i, imgFrame_GL);
-                utils::addPixel_CV(i, imgFrame_CV);
+                utils::addPixel_RGBA(i, imgFrame_GL);
+                utils::addPixel_BGRA(i, imgFrame_CV);
             } else {
                 utils::addXYZ(i, pCloudFrame, ptr_sensorPCloudData);
-                utils::addPixel_GL(i, imgFrame_GL, ptr_sensorImgData);
-                utils::addPixel_CV(i, imgFrame_CV, ptr_sensorImgData);
+                utils::addPixel_RGBA(i, imgFrame_GL, ptr_sensorImgData);
+                utils::addPixel_BGRA(i, imgFrame_CV, ptr_sensorImgData);
             }
             utils::adapt(i, point, pCloudFrame, imgFrame_CV);
             pCloud[i] = point;
@@ -444,25 +491,27 @@ void I3d::segmentRegion(std::shared_ptr<I3d>& sptr_i3d)
             if (utils::inSegment(i, pCloudFrame, sptr_i3d->getBoundary().first,
                     sptr_i3d->getBoundary().second)) {
                 utils::addXYZ(i, pCloudSegFrame, ptr_sensorPCloudData);
-                utils::addPixel_GL(i, imgSegFrame_GL, ptr_sensorImgData);
-                utils::addPixel_CV(i, imgSegFrame_CV, ptr_sensorImgData);
+                utils::addPixel_RGBA(i, imgSegFrame_GL, ptr_sensorImgData);
+                utils::addPixel_BGRA(i, imgSegFrame_CV, ptr_sensorImgData);
+                point.m_id = index; // test
                 pCloudSeg[index] = point;
                 index++;
             } else {
                 utils::addXYZ(i, pCloudSegFrame);
-                utils::addPixel_GL(i, imgSegFrame_GL);
+                utils::addPixel_RGBA(i, imgSegFrame_GL);
             }
         }
         std::vector<Point> optimizedPCloudSeg(
             pCloudSeg.begin(), pCloudSeg.begin() + index);
 
         sptr_i3d->setPCloud(pCloud);
+        sptr_i3d->setPCloudSeg(pCloudSeg);
         sptr_i3d->setPCloudFrame(pCloudFrame);
         sptr_i3d->setImgFrame_GL(imgFrame_GL);
         sptr_i3d->setImgFrame_CV(imgFrame_CV);
-        sptr_i3d->setPCloudSeg(optimizedPCloudSeg);
         sptr_i3d->setPCloudSegFrame(pCloudSegFrame);
         sptr_i3d->setImgSegFrame_GL(imgSegFrame_GL);
+        sptr_i3d->setOptimizedPCloudSeg(optimizedPCloudSeg);
         RAISE_SEGMENT_READY_FLAG
         STOP_TIMER(" frame region thread: runtime @ ")
     }
@@ -474,12 +523,10 @@ void I3d::clusterRegion(
 {
 #if CLUSTER_REGION == 1
     SLEEP_UNTIL_SEGMENT_READY
-    int w = sptr_i3d->getDepthWidth();
-    int h = sptr_i3d->getDepthHeight();
     START
     while (sptr_i3d->isRun()) {
         START_TIMER
-        std::vector<Point> points = *sptr_i3d->getPCloudSeg();
+        std::vector<Point> points = *sptr_i3d->getOptimizedPCloudSeg();
 
         // dbscan::cluster clusters candidate interaction regions
         //   from the segmented tabletop surface. It returns a
@@ -500,106 +547,6 @@ void I3d::clusterRegion(
                 const std::vector<unsigned long>& b) {
                 return a.size() > b.size();
             });
-
-        // cast *index clusters to *point clusters
-        std::vector<std::vector<Point>> pointClusters;
-        for (const auto& cluster : indexClusters) {
-            std::vector<Point> heap;
-            for (const auto& index : cluster) {
-                heap.emplace_back(points[index]);
-            }
-            pointClusters.emplace_back(heap);
-        }
-
-        // extract the distance to the tabletop surface (f)
-        std::vector<float> depth(pointClusters[0].size());
-        for (int i = 0; i < pointClusters.size(); i++) {
-            depth[i] = pointClusters[0][i].m_xyz[2];
-        }
-        int16_t f = *std::max_element(depth.begin(), depth.end());
-
-        // one approach to analyzing the clusters is to study
-        // the face normals.
-        //
-
-        // config flags for svd computation
-        int flag = Eigen::ComputeThinU | Eigen::ComputeThinV;
-
-        // compute and heap the normals of each cluster
-        std::vector<Eigen::Vector3d> normals(pointClusters.size());
-        int index = 0;
-        for (const auto& cluster : pointClusters) {
-            SVD usv(cluster, flag);
-            normals[index] = usv.getV3Normal();
-            index++;
-        }
-
-        // extract the vacant space and corresponding normal
-        std::vector<Point> vacantSpace = pointClusters[0];
-        Eigen::Vector3d n1 = normals[0];
-
-        pointClusters.erase(pointClusters.begin());
-        normals.erase(normals.begin());
-        const float ARGMIN = -0.00000008;
-
-        std::vector<std::vector<Point>> objectClusters;
-
-        // find coplanar clusters
-        index = 0;
-        const float GIVE_WAY = 10; // height restriction in mm
-        for (const auto& n2 : normals) {
-            double numerator = n1.dot(n2);
-            double denominator = n1.norm() * n2.norm();
-            double solution = std::acos(numerator / denominator);
-
-            if (!std::isnan(solution) && solution < ARGMIN
-                && solution > -ARGMIN) {
-                for (const auto& point : pointClusters[index]) {
-                    vacantSpace.emplace_back(point);
-                }
-            } else {
-                objectClusters.emplace_back(pointClusters[index]);
-            }
-            index++;
-        }
-
-        // colorize objects on surface
-        std::vector<uint8_t*> colors;
-        utils::add(colors);
-
-        // stitch colorized segment
-        std::vector<Point> pCloudSegment;
-        index = 0;
-        for (auto& object : objectClusters) {
-            if (index < colors.size()) {
-                for (auto& point : object) {
-                    // point.setPixel_GL(colors[index]);
-                    pCloudSegment.emplace_back(point);
-                }
-                index++;
-            }
-        }
-        uint8_t col[4] = { 0, 0, 0, 0 };
-        for (auto& point : vacantSpace) {
-            point.setPixel_GL(col);
-            pCloudSegment.emplace_back(point);
-        }
-
-        int16_t pCloudFrame[w * h * 3];
-        uint8_t imgFrame_GL[w * h * 4];
-        uint8_t imgFrame_CV[w * h * 4];
-
-        index = 0;
-        for (const auto& point : pCloudSegment) {
-            utils::stitch(index, pCloudSegment[index], pCloudFrame, imgFrame_GL,
-                imgFrame_CV);
-            index++;
-        }
-
-        sptr_i3d->setColClusters({ pCloudFrame, imgFrame_GL });
-
-        // writePoints(pCloudSegment);
-        // writePoints(vacantSpace);
 
         sptr_i3d->setPCloudClusters({ points, indexClusters });
         RAISE_CLUSTERS_READY_FLAG

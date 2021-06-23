@@ -4,7 +4,7 @@
 #include "outliers.h"
 #include "point.h"
 
-const float IQR = 1.5; // <- Inter quartile range (in theory 1.5)
+const float IQR = 0.06; // <- Inter quartile range (in principle 1.5)
 
 std::vector<Point> outliers::filter(std::vector<Point>& points)
 {

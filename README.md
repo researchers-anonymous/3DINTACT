@@ -75,7 +75,7 @@ cd build/bin
 This project uses Microsoft's Azure Kinect to form a concrete example. The point cloud can be [adapted](/doc/README.md).
 The project documentation is underway. In the meantime, please feel free to request support and submit issues and any feature requests.
 
-* check out an illustration of what this project offers over on [YouTube](https://youtu.be/E0CcBCk7rjU)
+* check out an illustration of what this project offers over on [YouTube](https://youtu.be/gAxxNb9llio)
 
 * cite as:
 ```tex
@@ -86,3 +86,4 @@ url = {https://github.com/researchers-anonymous/3DINTACT},
 year = {2021}
 }
 ```
+

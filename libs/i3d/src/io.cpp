@@ -1,8 +1,7 @@
+#include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <sstream>
-//#include <opencv2/opencv.hpp>
-#include <algorithm>
+#include <opencv2/opencv.hpp>
 #include <set>
 #include <string>
 #include <unistd.h>
@@ -44,39 +43,35 @@ std::vector<Point> io::read(std::vector<Point> points, const char* file)
         }
 
         /** create Point type definitions */
-        Point point((float)std::stof(row[0]), (float)std::stof(row[1]),
-            (float)std::stof(row[2]));
+        Point point((int16_t)std::stof(row[0]), (int16_t)std::stof(row[1]),
+            (int16_t)std::stof(row[2]));
         points.push_back(point);
         id++;
     }
     return points;
 }
 
-void io::write(std::vector<float>& y, const std::string& file)
+void io::write(std::vector<float>& value)
 {
+    const std::string fileName = "./output/knn.csv";
     std::ofstream filestream;
-    filestream.open(file);
-    filestream << "x,y" << std::endl;
-    int x = 1;
-    for (const auto& val : y) {
-        filestream << x << ", " << val << std::endl;
-        x++;
+    filestream.open(fileName);
+    filestream << "index,value" << std::endl;
+    int index = 1;
+    for (const auto& v : value) {
+        filestream << index << ", " << v << std::endl;
+        index++;
     }
     filestream.close();
 }
 
-// void io::write(const k4a_image_t& t_rgb)
-// {
-//     const std::string IMAGE_FILE = "./output/scene.png";
-//     int rgbWidth = k4a_image_get_width_pixels(t_rgb);
-//     int rgbHeight = k4a_image_get_height_pixels(t_rgb);
-//
-//     uint8_t* color_image_data = k4a_image_get_buffer(t_rgb);
-//     cv::Mat m_image = cv::Mat(rgbHeight, rgbWidth, CV_8UC4,
-//         (void*)color_image_data, cv::Mat::AUTO_STEP);
-//
-//     cv::imwrite(IMAGE_FILE, m_image);
-// }
+void io::write(const uint8_t* imgData, const int& w, const int& h)
+{
+    const std::string IMAGE_FILE = "./output/scene.png";
+    cv::Mat img
+        = cv::Mat(h, w, CV_8UC4, (void*)imgData, cv::Mat::AUTO_STEP).clone();
+    cv::imwrite(IMAGE_FILE, img);
+}
 
 void io::performance(const float& rawData, const float& filteredData,
     const std::string& filterTime, const float& coarseSeg,

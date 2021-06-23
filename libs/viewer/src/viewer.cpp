@@ -54,26 +54,27 @@ void viewer::render(std::shared_ptr<I3d>& sptr_i3d)
     pangolin::RegisterKeyPressCallback(pangolin::PANGO_CTRL + 'c', view);
 
     /** pool resources, and render */
-    int16_t* pCloudFrame;
-    uint8_t* imgFrame;
+    int16_t* ptr_pCloudFrame;
+    uint8_t* ptr_imgFrame;
 
     while (!sptr_i3d->isStop()) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if (mode == 0) {
-            pCloudFrame = sptr_i3d->getPCloudFrame()->data();
-            imgFrame = sptr_i3d->getImgFrame_GL()->data();
+            ptr_pCloudFrame = sptr_i3d->getPCloudFrame()->data();
+            ptr_imgFrame = sptr_i3d->getImgFrame_GL()->data();
         } else if (mode == 1) {
-            pCloudFrame = sptr_i3d->getPCloudSegFrame()->data();
-            imgFrame = sptr_i3d->getImgSegFrame_GL()->data();
-        } else if (mode == 2) {
-            auto clusters = sptr_i3d->getColClusters();
-            pCloudFrame = clusters->first;
-            imgFrame = clusters->second;
+            ptr_pCloudFrame = sptr_i3d->getPCloudSegFrame()->data();
+            ptr_imgFrame = sptr_i3d->getImgSegFrame_GL()->data();
         }
+        // else if (mode == 2) {
+        //     auto clusters = sptr_i3d->getColClusters();
+        //     ptr_pCloudFrame = clusters->first;
+        //     ptr_imgFrame = clusters->second;
+        // }
 
-        vA.Upload((void*)pCloudFrame, w * h * 3 * sizeof(int16_t));
-        cA.Upload((void*)imgFrame, w * h * 4 * sizeof(uint8_t));
+        vA.Upload((void*)ptr_pCloudFrame, w * h * 3 * sizeof(int16_t));
+        cA.Upload((void*)ptr_imgFrame, w * h * 4 * sizeof(uint8_t));
 
         viewPort.Activate(camera);
         glClearColor(0.0, 0.0, 0.3, 1.0);
