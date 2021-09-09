@@ -1,4 +1,4 @@
-![](https://github.com/researchers-anonymous/3DINTACT/blob/main/doc/figures/README_illustration.png)
+![](https://github.com/edisonslightbulbs/traceless/blob/develop/doc/figures/README_illustration.png)
 
 # 3DINTACT
 #### An open-source CXX_11 project for segmenting interaction regions on tabletop surfaces near real-time
@@ -38,13 +38,9 @@ Microsoft's Azure Kinect has a ceremonious list dependencies. Be sure to install
 
 A dated [Depth Engine](https://github.com/microsoft/Azure-Kinect-Sensor-SDK/blob/develop/docs/depthengine.md) binary is provided and can be installed by running this [`install_depthengine.sh`](./scripts/) helper script. Please follow [ this hyperlink ](https://github.com/microsoft/Azure-Kinect-Sensor-SDK/blob/develop/docs/depthengine.md) for the official step-by-step on how to get the most up-to-date depth engine.
 
-###### 2. The USB rules
+###### 2. The USB rules and shared system libraries
 
-For convenience, the USB rules can be installed by running this [`install_usb_rules.sh`](./scripts/) helper script.
-
-###### 3. Shared system libraries
-
-For convenience, run this [`install_kinect_sdk_dependencies.sh`](./scripts/) helper script to install the Kinect dependencies.
+For convenience, the USB rules can be installed by running [`install_usb_rules.sh`](./scripts/), and shared system libs using  [`install_kinect_sdk_dependencies.sh`](./scripts/). We recommend using the most [up-to-date instructions](https://github.com/microsoft/Azure-Kinect-Sensor-SDK/blob/develop/docs/usage.md).
 
 ##### `[3/3] Building the project`
 
@@ -58,26 +54,22 @@ cmake ..
 make
 ```
 
-2) from the project directory
+2) see `build/bin` directory for built examples and applications
+
+* CAVEAT: use `--logtostderr=1` to see output logs in STDOUT. E.g, run the chromakey exdample as follows.
 
 ```bash
-# change to project binary directory
 cd build/bin
-
-# run target
-./3DINTACToolkit
-
-# to stdout logs [ optional ]
-# ./3DINTACToolkit --logtostderr=1
+chromakey --logtostderr=1
 ```
+
 
 ## Notes
 This project uses Microsoft's Azure Kinect to form a concrete example. The point cloud can be [adapted](/doc/README.md).
-The project documentation is underway. In the meantime, please feel free to request support and submit issues and any feature requests.
+The project documentation is underway. In the meantime, we offer support and welcome issues and feature requests. You can check out an illustration of segmenting a surface in real-time over on [YouTube](https://www.youtube.com/watch?v=wdg6U8jZmpU&ab_channel=edisonslightbulbs).
 
-* check out an illustration of what this project offers over on [YouTube](https://youtu.be/gAxxNb9llio)
+* if the project is helpful with your work (or any part of it),  citing is one way of letting us know we are doing some good in this world:
 
-* cite as:
 ```tex
 @misc{3DINTACToolkit2021,
 author = {Anonymous},
@@ -87,3 +79,13 @@ year = {2021}
 }
 ```
 
+* if you find the application of how to detect mobile device on surfaces helpful, and put it to some good use, you can also cite the work as:
+
+```tex
+@misc{Traceless2021,
+author = {Anonymous},
+title = {{Traceless: an open-source CXX{\}_11 project for seamless communication between augmented interactive surfaces and personal mobile devices}},
+url = {https://github.com/researchers-anonymous/3DINTACT},
+year = {2021}
+}
+```

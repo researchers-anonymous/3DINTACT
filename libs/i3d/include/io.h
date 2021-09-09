@@ -31,16 +31,17 @@ public:
      * @param k4a_image_t
      *   RGB image from kinect.
      */
-    static void write(const uint8_t* imgData, const int& w, const int& h);
+    static void write(const int& w, const int& h, const uint8_t* bgra,
+        const std::string& path);
 
     /**
      * io::write
      *   Writes any given list of values for graphing.
      *
-     * @param value
+     * @param values
      *   A vector list of (float) y values.
      */
-    static void write(std::vector<float>& value);
+    static void write(std::vector<float>& values);
 
     /**
      * io::head
@@ -91,6 +92,8 @@ public:
         const std::string& filterTime, const float& coarseSeg,
         const std::string& coarseSegTime, const float& finalSeg,
         const std::string& finalSegTime, const std::string& totalRuntime);
+
+    static void write(std::vector<float>& values, const std::string& file);
 };
 
 #endif /* IO_H */

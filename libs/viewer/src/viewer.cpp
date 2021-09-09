@@ -5,6 +5,7 @@
 #include "tinyply.h"
 
 #include "i3d.h"
+#include "i3dmacros.hpp"
 #include "viewer.h"
 
 int mode = 0;
@@ -16,11 +17,11 @@ void view()
     }
 }
 
-void viewer::render(std::shared_ptr<I3d>& sptr_i3d)
+void viewer::render(std::shared_ptr<i3d>& sptr_i3d)
 {
     // get dimensions
-    int w = sptr_i3d->getDepthWidth();
-    int h = sptr_i3d->getDepthHeight();
+    int w = sptr_i3d->getDWidth();
+    int h = sptr_i3d->getDHeight();
 
     /** create window and bind its context to the main thread */
     pangolin::CreateWindowAndBind("VIGITIA", 2560, 1080);
@@ -57,15 +58,15 @@ void viewer::render(std::shared_ptr<I3d>& sptr_i3d)
     int16_t* ptr_pCloudFrame;
     uint8_t* ptr_imgFrame;
 
-    while (!sptr_i3d->isStop()) {
+    while (RUN) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if (mode == 0) {
-            ptr_pCloudFrame = sptr_i3d->getPCloudFrame()->data();
-            ptr_imgFrame = sptr_i3d->getImgFrame_GL()->data();
+            ptr_pCloudFrame = sptr_i3d->getXYZ()->data();
+            ptr_imgFrame = sptr_i3d->getRGBA()->data();
         } else if (mode == 1) {
-            ptr_pCloudFrame = sptr_i3d->getPCloudSegFrame()->data();
-            ptr_imgFrame = sptr_i3d->getImgSegFrame_GL()->data();
+            ptr_pCloudFrame = sptr_i3d->getXYZSeg()->data();
+            ptr_imgFrame = sptr_i3d->getRGBASeg()->data();
         }
         // else if (mode == 2) {
         //     auto clusters = sptr_i3d->getColClusters();
@@ -84,7 +85,7 @@ void viewer::render(std::shared_ptr<I3d>& sptr_i3d)
 
         /** gracious exit from rendering app */
         if (pangolin::ShouldQuit()) {
-            sptr_i3d->raiseStopFlag();
+            sptr_i3d->stop();
         }
     }
 }

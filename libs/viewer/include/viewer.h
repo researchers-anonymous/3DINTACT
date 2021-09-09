@@ -8,6 +8,6 @@
 #include "kinect.h"
 
 namespace viewer {
-void render(std::shared_ptr<I3d>& sptr_i3d);
+void render(std::shared_ptr<i3d>& sptr_i3d);
 }
 #endif /* VIEWER_H */

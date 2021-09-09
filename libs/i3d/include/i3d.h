@@ -9,7 +9,7 @@
 #include "kinect.h"
 #include "point.h"
 
-class I3d {
+class i3d {
 
 public:
     int m_imgWidth {};
@@ -19,34 +19,33 @@ public:
     int m_depthHeight {};
 
 private:
-    std::mutex m_imgDimensions;
-    std::mutex m_depthDimensions;
+    std::mutex m_dImgMutex;
+    std::mutex m_dDepthMutex;
 
-    std::mutex m_sensorTableDataMutex;
-    std::mutex m_sensorImgDataMutex;
-    std::mutex m_sensorDepthDataMutex;
-    std::mutex m_sensorPCloudDataMutex;
+    std::mutex m_depthMutex;
+    std::mutex m_XYZRawMutex;
+    std::mutex m_XYTableMutex;
+    std::mutex m_BGRARawMutex;
 
     std::mutex m_pCloudMutex;
     std::mutex m_pCloudSegMutex;
     std::mutex m_optimizedPCloudSegMutex;
 
-    std::mutex m_pCloudFrameMutex;
-    std::mutex m_pCloudSegFrameMutex;
-
+    std::mutex m_XYZMutex;
+    std::mutex m_XYZSegMutex;
     std::mutex m_pCloud2x2BinMutex;
     std::mutex m_pCloudSeg2x2BinMutex;
 
-    std::mutex m_imgFrameMutex_GL;
+    std::mutex m_RGBAMutex;
+    std::mutex m_BGRAMutex;
 
-    std::mutex m_imgSegFrameMutex_GL;
-    std::mutex m_imgSegFrameMutex_CV;
+    std::mutex m_RGBASegMutex;
 
     std::mutex m_boundaryMutex;
 
     std::mutex m_flagMutex;
     std::mutex m_pCloudClusterMutex;
-    std::mutex m_colClusterMutex;
+    std::mutex m_colorizedClustersMutex;
 
     std::shared_ptr<std::vector<Point>> sptr_pCloud = nullptr;
     std::shared_ptr<std::vector<Point>> sptr_pCloudSeg = nullptr;
@@ -54,25 +53,26 @@ private:
     std::shared_ptr<std::vector<Point>> sptr_pCloudSeg2x2Bin = nullptr;
     std::shared_ptr<std::vector<Point>> sptr_optimizedPCloudSeg = nullptr;
 
-    k4a_float2_t* ptr_sensorTableData = nullptr;
-    std::shared_ptr<uint8_t*> sptr_sensorImgData = nullptr;
-    std::shared_ptr<uint8_t*> sptr_sensorC2DImgData = nullptr;
-    std::shared_ptr<int16_t*> sptr_sensorPCloudData = nullptr;
-    std::shared_ptr<uint16_t*> sptr_sensorDepthData = nullptr;
+    k4a_float2_t* ptr_XYTableData = nullptr; // todo: cross check
+    std::shared_ptr<int16_t*> sptr_XYZRaw = nullptr;
+    std::shared_ptr<uint8_t*> sptr_BGRARaw = nullptr;
+    std::shared_ptr<uint8_t*> sptr_BGRAC2DRaw = nullptr;
+    std::shared_ptr<uint16_t*> sptr_XYZDepth = nullptr;
 
-    std::pair<Point, Point> m_boundary {};
-    std::shared_ptr<std::vector<uint8_t>> sptr_imgFrame_CV = nullptr;
-    std::shared_ptr<std::vector<uint8_t>> sptr_imgFrame_GL = nullptr;
-    std::shared_ptr<std::vector<int16_t>> sptr_pCloudFrame = nullptr;
-    std::shared_ptr<std::vector<int16_t>> sptr_pCloudSegFrame = nullptr;
-    std::shared_ptr<std::vector<uint8_t>> sptr_imgFrameSeg_GL = nullptr;
+    std::pair<Point, Point> m_segBoundary {};
+    std::shared_ptr<std::vector<int16_t>> sptr_XYZ = nullptr;
+    std::shared_ptr<std::vector<uint8_t>> sptr_BGRA = nullptr;
+    std::shared_ptr<std::vector<uint8_t>> sptr_RGBA = nullptr;
+    std::shared_ptr<std::vector<int16_t>> sptr_XYZSeg = nullptr;
+    std::shared_ptr<std::vector<uint8_t>> sptr_RGBASeg = nullptr;
 
     typedef std::pair<std::vector<Point>,
         std::vector<std::vector<unsigned long>>>
         t_clusters;
 
     std::shared_ptr<t_clusters> sptr_pCloudClusters = nullptr;
-    std::shared_ptr<std::pair<int16_t*, uint8_t*>> sptr_colClusters = nullptr;
+    std::shared_ptr<std::pair<int16_t*, uint8_t*>> sptr_colorizedClusters
+        = nullptr;
 
     std::shared_ptr<bool> sptr_run;
     std::shared_ptr<bool> sptr_stop;
@@ -86,7 +86,7 @@ public:
     /** i3d
      *   Constructs instance of 3dintact
      */
-    I3d();
+    i3d();
 
     /** proposeRegion
      *   Proposes a region/segment of an orthogonal
@@ -95,7 +95,7 @@ public:
      * @param sptr_i3d
      *   Instance of API call.
      */
-    static void proposeRegion(std::shared_ptr<I3d>& sptr_i3d);
+    static void proposeRegion(std::shared_ptr<i3d>& sptr_i3d);
 
     /** buildPCloud
      *   Builds a point cloud suited to i3d computations
@@ -103,7 +103,7 @@ public:
      * @param sptr_i3d
      *   Instance of API call.
      */
-    static void buildPCloud(std::shared_ptr<I3d>& sptr_i3d);
+    static void buildPCloud(std::shared_ptr<i3d>& sptr_i3d);
 
     /** clusterRegion
      *   Does spatial clustering of the extracted
@@ -117,7 +117,7 @@ public:
      *   Instance of API call.
      */
     static void clusterRegion(const float& epsilon, const int& minPoints,
-        std::shared_ptr<I3d>& sptr_i3d);
+        std::shared_ptr<i3d>& sptr_i3d);
 
     /** segmentRegion
      *   Creates point cloud and image data frames
@@ -126,7 +126,7 @@ public:
      * @param sptr_i3d
      *   Instance of API call.
      */
-    static void segmentRegion(std::shared_ptr<I3d>& sptr_i3d);
+    static void segmentRegion(std::shared_ptr<i3d>& sptr_i3d);
 
     void stop();
     bool isRun();
@@ -138,58 +138,58 @@ public:
     bool isSensorReady();
 
     void raiseRunFlag();
-    void raiseStopFlag();
+    // void raiseStopFlag();
     void raiseSegmentedFlag();
     void raiseClusteredFlag();
     void raiseSensorReadyFlag();
     void raiseProposalReadyFlag();
     void raisePCloudReadyFlag();
 
-    int getImgWidth();
-    int getImgHeight();
-    void setImgWidth(const int& width);
-    void setImgHeight(const int& height);
+    int getRGBAWidth();
+    int getRGBAHeight();
+    void setRGBAWidth(const int& width);
+    void setRGBAHeight(const int& height);
 
-    int getDepthWidth();
-    int getDepthHeight();
-    void setDepthWidth(const int& width);
-    void setDepthHeight(const int& height);
+    int getDWidth();
+    int getDHeight();
+    void setDWidth(const int& width);
+    void setDHeight(const int& height);
 
-    void setSensorPCloudData(int16_t* ptr_pclData);
-    std::shared_ptr<int16_t*> getSensorPCloudData();
+    void setXYZData(int16_t* xyz);
+    std::shared_ptr<int16_t*> getXYZData();
 
-    void setSensorTableData(k4a_float2_t* ptr_table);
-    k4a_float2_t* getSensorTableData();
+    void setXYTableData(k4a_float2_t* ptr_table);
+    k4a_float2_t* getXYTableData();
 
-    void setSensorC2DImgData(uint8_t* ptr_imgData);
-    std::shared_ptr<uint8_t*> getSensorC2DImgData();
+    void setC2DBGRAData(uint8_t* bgra);
+    std::shared_ptr<uint8_t*> getC2DBGRAData();
 
-    void setSensorImgData(uint8_t* ptr_imgData);
-    std::shared_ptr<uint8_t*> getSensorImgData();
+    void setBGRAData(uint8_t* bgra);
+    std::shared_ptr<uint8_t*> getBGRAData();
 
-    void setSensorDepthData(uint16_t* ptr_depth);
-    std::shared_ptr<uint16_t*> getSensorDepthData();
+    void setDepthData(uint16_t* xyz);
+    std::shared_ptr<uint16_t*> getDepthData();
 
     void setPCloud2x2Bin(const std::vector<Point>& points);
     std::shared_ptr<std::vector<Point>> getPCloud2x2Bin();
 
-    void setImgFrame_CV(const std::vector<uint8_t>& frame);
-    std::shared_ptr<std::vector<uint8_t>> getImgFrame_CV();
+    void setBGRA(const std::vector<uint8_t>& bgra);
+    std::shared_ptr<std::vector<uint8_t>> getBGRA();
 
-    void setPCloudFrame(const std::vector<int16_t>& frame);
-    std::shared_ptr<std::vector<int16_t>> getPCloudFrame();
+    void setXYZ(const std::vector<int16_t>& xyz);
+    std::shared_ptr<std::vector<int16_t>> getXYZ();
 
-    void setImgFrame_GL(const std::vector<uint8_t>& frame);
-    std::shared_ptr<std::vector<uint8_t>> getImgFrame_GL();
+    void setRGBA(const std::vector<uint8_t>& rgba);
+    std::shared_ptr<std::vector<uint8_t>> getRGBA();
 
-    void setPCloudSegFrame(const std::vector<int16_t>& frame);
-    std::shared_ptr<std::vector<int16_t>> getPCloudSegFrame();
+    void setXYZSeg(const std::vector<int16_t>& xyz);
+    std::shared_ptr<std::vector<int16_t>> getXYZSeg();
 
-    void setImgSegFrame_GL(const std::vector<uint8_t>& frame);
-    std::shared_ptr<std::vector<uint8_t>> getImgSegFrame_GL();
+    void setRGBASeg(const std::vector<uint8_t>& rgba);
+    std::shared_ptr<std::vector<uint8_t>> getRGBASeg();
 
-    void setI3dBoundary(std::pair<Point, Point>& boundary);
-    std::pair<Point, Point> getBoundary();
+    void setSegBoundary(std::pair<Point, Point>& boundary);
+    std::pair<Point, Point> getSegBoundary();
 
     void setPCloud(const std::vector<Point>& points);
     __attribute__((unused)) std::shared_ptr<std::vector<Point>> getPCloud();
@@ -207,8 +207,9 @@ public:
     void setPCloudClusters(const t_clusters& clusters);
     std::shared_ptr<t_clusters> getPCloudClusters();
 
-    void setColClusters(const std::pair<int16_t*, uint8_t*>& colClusters);
+    void setColorizedClusters(
+        const std::pair<int16_t*, uint8_t*>& colorizedClusters);
 
-    std::shared_ptr<std::pair<int16_t*, uint8_t*>> getColClusters();
+    std::shared_ptr<std::pair<int16_t*, uint8_t*>> getColorizedClusters();
 };
 #endif /* I3D_H */

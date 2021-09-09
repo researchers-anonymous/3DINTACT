@@ -1,10 +1,13 @@
-#include "timer.h"
+#include "i3dtimer.h"
 #include <chrono>
 
 const double MILLISECOND = 1000;
 
-Timer::Timer() { m_startTime = std::chrono::high_resolution_clock::now(); }
-std::string Timer::getDuration()
+i3dtimer::i3dtimer()
+{
+    m_startTime = std::chrono::high_resolution_clock::now();
+}
+std::string i3dtimer::getDuration()
 {
     auto now = std::chrono::high_resolution_clock::now();
     auto startInstant

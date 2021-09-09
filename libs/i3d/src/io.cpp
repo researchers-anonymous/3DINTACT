@@ -51,26 +51,25 @@ std::vector<Point> io::read(std::vector<Point> points, const char* file)
     return points;
 }
 
-void io::write(std::vector<float>& value)
+void io::write(std::vector<float>& values, const std::string& file)
 {
-    const std::string fileName = "./output/knn.csv";
     std::ofstream filestream;
-    filestream.open(fileName);
+    filestream.open(file);
     filestream << "index,value" << std::endl;
     int index = 1;
-    for (const auto& v : value) {
+    for (const auto& v : values) {
         filestream << index << ", " << v << std::endl;
         index++;
     }
     filestream.close();
 }
 
-void io::write(const uint8_t* imgData, const int& w, const int& h)
+void io::write(
+    const int& w, const int& h, const uint8_t* bgra, const std::string& path)
 {
-    const std::string IMAGE_FILE = "./output/scene.png";
-    cv::Mat img
-        = cv::Mat(h, w, CV_8UC4, (void*)imgData, cv::Mat::AUTO_STEP).clone();
-    cv::imwrite(IMAGE_FILE, img);
+    cv::Mat image
+        = cv::Mat(h, w, CV_8UC4, (void*)bgra, cv::Mat::AUTO_STEP).clone();
+    cv::imwrite(path, image);
 }
 
 void io::performance(const float& rawData, const float& filteredData,
